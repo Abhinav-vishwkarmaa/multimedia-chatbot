@@ -1,0 +1,84 @@
+.audio-recorder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #fff3cd;
+  border: 2px solid #ffeaa7;
+  border-radius: 15px;
+  min-width: 200px;
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #856404;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.pulse-dot {
+  width: 12px;
+  height: 12px;
+  background: #dc3545;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.recorder-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stop-button {
+  background: #dc3545;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.stop-button:hover {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+.cancel-button {
+  background: transparent;
+  border: 1px solid #6c757d;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background: #6c757d;
+  color: white;
+}

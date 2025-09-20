@@ -1,0 +1,95 @@
+/* ChatGPT-style Chat Interface */
+
+.chat-interface {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 768px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
+  min-height: 100vh;
+}
+
+/* Empty Chat State */
+.empty-chat-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 60vh;
+}
+
+.empty-chat-content {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-chat-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.empty-chat-content p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 400px;
+  margin: 0 auto 24px auto;
+}
+
+.start-new-chat-button {
+  background: linear-gradient(135deg, #10a37f 0%, #1a7f64 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(16, 163, 127, 0.3);
+}
+
+.start-new-chat-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 163, 127, 0.4);
+}
+
+.start-new-chat-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .chat-interface {
+    padding: 0 16px;
+  }
+  
+  .empty-chat-content {
+    padding: 20px 16px;
+  }
+  
+  .empty-chat-content h2 {
+    font-size: 1.3rem;
+  }
+  
+  .empty-chat-content p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .empty-chat-content h2 {
+    font-size: 1.2rem;
+  }
+  
+  .empty-chat-content p {
+    font-size: 0.85rem;
+  }
+}

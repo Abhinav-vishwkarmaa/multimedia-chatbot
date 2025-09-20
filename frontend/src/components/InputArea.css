@@ -1,0 +1,408 @@
+/* ChatGPT-style Input Area */
+
+.input-area {
+  padding: 20px 0 40px;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  position: sticky;
+  bottom: 0;
+  backdrop-filter: blur(10px);
+}
+
+.input-form {
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Preview Elements */
+.preview-image {
+  position: relative;
+  display: inline-block;
+  max-width: 200px;
+  margin-bottom: 8px;
+}
+
+.preview-image img {
+  width: 100%;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.preview-audio {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.preview-audio audio {
+  flex: 1;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.remove-button {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+  z-index: 10;
+}
+
+.remove-button:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Input Row */
+.input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+
+.input-row:focus-within {
+  border-color: #10a37f;
+  box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1), var(--shadow);
+}
+
+.text-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 16px;
+  color: var(--text-primary);
+  resize: none;
+  min-height: 24px;
+  max-height: 120px;
+  line-height: 1.5;
+  font-family: inherit;
+  padding: 4px 0;
+}
+
+.text-input::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Input Buttons */
+.input-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.input-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.input-button:active {
+  transform: scale(0.95);
+}
+
+/* Hidden file input */
+input[type="file"] {
+  display: none;
+}
+
+/* Send Button */
+.send-button {
+  background: #10a37f;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(16, 163, 127, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #0d8a6b;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 163, 127, 0.4);
+}
+
+.send-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Send button loading animation */
+.send-button.loading {
+  position: relative;
+}
+
+.send-button.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Audio Recorder Styles */
+.audio-recorder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  min-width: 200px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #92400e;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.pulse-dot {
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.recorder-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stop-button {
+  background: #ef4444;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.stop-button:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.cancel-button {
+  background: transparent;
+  border: 1px solid #6b7280;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background: #6b7280;
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .input-area {
+    padding: 16px 0 20px;
+  }
+  
+  .input-row {
+    padding: 10px 12px;
+  }
+  
+  .text-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .input-buttons {
+    gap: 6px;
+  }
+  
+  .input-button {
+    padding: 6px;
+  }
+  
+  .send-button {
+    padding: 8px;
+  }
+  
+  .preview-image {
+    max-width: 150px;
+  }
+  
+  .preview-image img {
+    max-height: 100px;
+  }
+  
+  .audio-recorder {
+    min-width: 180px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .input-area {
+    padding: 12px 0 16px;
+  }
+  
+  .input-row {
+    padding: 8px 10px;
+  }
+  
+  .input-buttons {
+    gap: 4px;
+  }
+  
+  .input-button {
+    padding: 4px;
+  }
+  
+  .send-button {
+    padding: 6px;
+  }
+  
+  .preview-image {
+    max-width: 120px;
+  }
+  
+  .preview-image img {
+    max-height: 80px;
+  }
+  
+  .audio-recorder {
+    min-width: 160px;
+    padding: 10px;
+  }
+  
+  .recording-indicator {
+    font-size: 12px;
+  }
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .audio-recorder {
+  background: #374151;
+  border-color: #6b7280;
+}
+
+[data-theme="dark"] .recording-indicator {
+  color: #d1d5db;
+}
+
+[data-theme="dark"] .cancel-button {
+  border-color: #9ca3af;
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .cancel-button:hover {
+  background: #9ca3af;
+  color: #1f2937;
+}
+
+/* Focus styles for accessibility */
+.input-button:focus-visible,
+.send-button:focus-visible,
+.remove-button:focus-visible {
+  outline: 2px solid #10a37f;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
