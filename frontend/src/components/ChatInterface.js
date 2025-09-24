@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MessageList from './MessageList.js';
 import InputArea from './InputArea.js';
-import { apiCall, API_CONFIG } from '../config/api.js';
+import api from '../api.js';
 import './ChatInterface.css';
 
 const ChatInterface = ({ currentChat, onChatUpdate }) => {
@@ -11,77 +11,137 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
 
   // Load messages when currentChat changes
   useEffect(() => {
-    if (currentChat && currentChat.messages) {
-      // Convert timestamp strings back to Date objects
-      const messagesWithDates = currentChat.messages.map(message => ({
-        ...message,
-        timestamp: message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp)
+    if (currentChat?.messages?.length) {
+      const messagesWithDates = currentChat.messages.map(msg => ({
+        ...msg,
+        timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
       }));
       setMessages(messagesWithDates);
     } else {
-      // Show welcome message when no chat is selected
       setMessages([
         {
           id: 1,
           type: 'bot',
           content: 'Hello! I can help you with text, images, and audio. Start a new conversation to begin!',
           timestamp: new Date(),
-          audioUrl: null
+          audioUrl: null,
+          imageUrl: null
         }
       ]);
     }
   }, [currentChat]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Scroll to bottom on messages update
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async (messageData) => {
+  const saveChatToStorage = chat => {
+    const STORAGE_KEY = 'multimodal-chatbot-chats';
+    const MAX_CHATS = 20;
+    const MAX_MESSAGES_PER_CHAT = 100;
+
+    const sanitizeMessage = m => {
+      const msg = { ...m };
+      if (typeof msg.imageUrl === 'string' && msg.imageUrl.startsWith('data:') && msg.imageUrl.length > 100000) {
+        msg.imageUrl = null;
+      }
+      if (typeof msg.audioUrl === 'string' && msg.audioUrl.startsWith('data:') && msg.audioUrl.length > 100000) {
+        msg.audioUrl = null;
+      }
+      return msg;
+    };
+
+    const prune = chats => {
+      const sorted = [...chats].sort((a, b) => new Date(b.lastModified || 0) - new Date(a.lastModified || 0));
+      const limited = sorted.slice(0, MAX_CHATS).map(c => ({
+        ...c,
+        messages: (c.messages || []).slice(-(MAX_MESSAGES_PER_CHAT)).map(sanitizeMessage)
+      }));
+      return limited;
+    };
+
+    const trySave = (chats) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    let savedChats = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      savedChats = raw ? JSON.parse(raw) : [];
+    } catch (_) {
+      savedChats = [];
+    }
+    const exists = savedChats.some(c => c.id === chat.id);
+    const merged = exists ? savedChats.map(c => (c.id === chat.id ? chat : c)) : [...savedChats, chat];
+
+    // First attempt with normal pruning
+    let candidate = prune(merged);
+    if (trySave(candidate)) return;
+
+    // Aggressive pruning on failure: trim messages further and drop oldest chats progressively
+    let aggressive = candidate;
+    let maxMsgs = Math.min(50, MAX_MESSAGES_PER_CHAT);
+    while (!trySave(aggressive) && (maxMsgs > 10 || aggressive.length > 1)) {
+      aggressive = aggressive.map(c => ({ ...c, messages: (c.messages || []).slice(-maxMsgs) }));
+      if (!trySave(aggressive)) {
+        if (aggressive.length > 1) aggressive = aggressive.slice(0, aggressive.length - 1);
+        maxMsgs = Math.max(10, Math.floor(maxMsgs * 0.7));
+      }
+    }
+
+    // Last resort: attempt to save a minimal snapshot or clear key
+    if (!trySave(aggressive)) {
+      const minimal = aggressive.map(c => ({ id: c.id, name: c.name, lastModified: c.lastModified, messages: [] }));
+      if (!trySave(minimal)) {
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch (_) {}
+      }
+    }
+  };
+
+  const handleSendMessage = async messageData => {
     const newMessage = {
       id: Date.now(),
       type: 'user',
-      content: messageData.content,
+      content: messageData.content || '',
       timestamp: new Date(),
-      audioUrl: messageData.audioUrl,
-      imageUrl: messageData.imageUrl
+      audioUrl: messageData.audioBlob ? URL.createObjectURL(messageData.audioBlob) : null,
+      imageUrl: messageData.imagePreviewUrl || null
     };
 
     const updatedMessages = [...messages, newMessage];
     setMessages(updatedMessages);
     setIsLoading(true);
 
-    // Update current chat with new message
+    // Update current chat
     if (currentChat) {
-      const updatedChat = {
-        ...currentChat,
-        messages: updatedMessages,
-        lastModified: new Date().toISOString()
-      };
+      const updatedChat = { ...currentChat, messages: updatedMessages, lastModified: new Date().toISOString() };
       onChatUpdate(updatedChat);
-      saveChatToStorage(updatedChat);
+      try { saveChatToStorage(updatedChat); } catch (_) {}
     }
 
     try {
-      // Prepare data for API call
-      const apiData = {
-        text: messageData.content || '',
-        image: messageData.imageUrl || null,
-        audio: messageData.audioUrl || null,
-        timestamp: new Date().toISOString()
-      };
+      // Determine which API call to use
+      let botResponseData;
+      if (messageData.audioBlob) {
+        botResponseData = await api.sendAudio(messageData.audioBlob);
+      } else if (messageData.imageFile) {
+        botResponseData = await api.sendImage(messageData.imageFile);
+      } else {
+        botResponseData = await api.sendText(messageData.content);
+      }
 
-      // Call your backend API using the helper function
-      const botResponseData = await apiCall(API_CONFIG.ENDPOINTS.CHAT, apiData);
-
-      // Create bot response message
       const botResponse = {
         id: Date.now() + 1,
         type: 'bot',
-        content: botResponseData.message || botResponseData.text || 'Sorry, I could not process your request.',
+        content: botResponseData.response || botResponseData.text || 'Sorry, I could not process your request.',
         timestamp: new Date(),
         audioUrl: botResponseData.audioUrl || null,
         imageUrl: botResponseData.imageUrl || null
@@ -89,73 +149,44 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
 
       const finalMessages = [...updatedMessages, botResponse];
       setMessages(finalMessages);
-      
-      // Update current chat with bot response
+
       if (currentChat) {
-        const updatedChat = {
-          ...currentChat,
-          messages: finalMessages,
-          lastModified: new Date().toISOString()
-        };
+        const updatedChat = { ...currentChat, messages: finalMessages, lastModified: new Date().toISOString() };
         onChatUpdate(updatedChat);
-        saveChatToStorage(updatedChat);
+        try { saveChatToStorage(updatedChat); } catch (_) {}
       }
     } catch (error) {
       console.error('API Error:', error);
-      
-      // Fallback response on error
+
       const errorResponse = {
         id: Date.now() + 1,
         type: 'bot',
         content: 'Sorry, I encountered an error processing your request. Please try again.',
         timestamp: new Date(),
-        audioUrl: null
+        audioUrl: null,
+        imageUrl: null
       };
-      
+
       const finalMessages = [...updatedMessages, errorResponse];
       setMessages(finalMessages);
-      
-      // Update current chat with error response
+
       if (currentChat) {
-        const updatedChat = {
-          ...currentChat,
-          messages: finalMessages,
-          lastModified: new Date().toISOString()
-        };
+        const updatedChat = { ...currentChat, messages: finalMessages, lastModified: new Date().toISOString() };
         onChatUpdate(updatedChat);
-        saveChatToStorage(updatedChat);
+        try { saveChatToStorage(updatedChat); } catch (_) {}
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const saveChatToStorage = (chat) => {
-    const savedChats = JSON.parse(localStorage.getItem('multimodal-chatbot-chats') || '[]');
-    const updatedChats = savedChats.map(savedChat => 
-      savedChat.id === chat.id ? chat : savedChat
-    );
-    localStorage.setItem('multimodal-chatbot-chats', JSON.stringify(updatedChats));
-  };
-
-  const generateBotResponse = (messageData) => {
-    if (messageData.imageUrl) {
-      return "I can see the image you sent! It looks interesting. How can I help you with it?";
-    } else if (messageData.audioUrl) {
-      return "I heard your audio message! Thanks for sharing that with me. What would you like to know?";
-    } else {
-      return `I received your message: "${messageData.content}". How can I assist you further?`;
-    }
-  };
-
-  // Show empty state when no chat is selected
   if (!currentChat) {
     return (
       <div className="empty-chat-state">
         <div className="empty-chat-content">
           <h2>No conversation selected</h2>
           <p>Choose a conversation from the sidebar or start a new chat to begin.</p>
-          <button 
+          <button
             className="start-new-chat-button"
             onClick={() => {
               const newChat = {
@@ -167,7 +198,8 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
                     type: 'bot',
                     content: 'Hello! I can help you with text, images, and audio. How can I assist you today?',
                     timestamp: new Date(),
-                    audioUrl: null
+                    audioUrl: null,
+                    imageUrl: null
                   }
                 ],
                 createdAt: new Date().toISOString(),
@@ -176,7 +208,6 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
               onChatUpdate(newChat);
             }}
           >
-            {/* <MessageSquare size={20} /> */}
             <span>Start New Chat</span>
           </button>
         </div>
@@ -186,10 +217,7 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
 
   return (
     <div className="chat-interface">
-      <MessageList 
-        messages={messages} 
-        isLoading={isLoading}
-      />
+      <MessageList messages={messages} isLoading={isLoading} />
       <div ref={messagesEndRef} />
       <InputArea onSendMessage={handleSendMessage} />
     </div>

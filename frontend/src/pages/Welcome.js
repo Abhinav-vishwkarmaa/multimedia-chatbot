@@ -17,7 +17,13 @@ const Welcome = () => {
     }
   }, []);
 
-
+  // Load darkMode from localStorage on mount
+  useEffect(() => {
+    const storedMode = localStorage.getItem("darkMode");
+    if (storedMode) {
+      setDarkMode(JSON.parse(storedMode));
+    }
+  }, []);
 
   const handleNewChat = () => {
     // Create a new chat automatically
@@ -97,7 +103,7 @@ const Welcome = () => {
             <ArrowRight size={20} />
           </button>
           
-          {!isAuthenticated ? (
+          {/* {!isAuthenticated ? (
             <div className="quick-actions">
               <button 
                 className="quick-action-button"
@@ -124,7 +130,7 @@ const Welcome = () => {
                 Go to Chat
               </button>
             </div>
-          )}
+          )} */}
         </div>
 
         <div className="welcome-footer">

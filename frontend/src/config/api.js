@@ -1,65 +1,56 @@
-// API Configuration
-export const API_CONFIG = {
-  // Replace with your actual API endpoint
-  BASE_URL: 'http://localhost:8000/api', // or 'https://your-api-domain.com/api'
-  
-  // API endpoints
-  ENDPOINTS: {
-    CHAT: '/chat',
-    UPLOAD: '/upload',
-    PROCESS_AUDIO: '/process-audio',
-    PROCESS_IMAGE: '/process-image'
-  },
-  
-  // Request timeout in milliseconds
-  TIMEOUT: 30000,
-  
-  // Default headers
-  DEFAULT_HEADERS: {
-    'Content-Type': 'application/json',
-    // Add your API key or authentication token here
-    // 'Authorization': 'Bearer YOUR_API_KEY_HERE',
-    // 'X-API-Key': 'YOUR_API_KEY_HERE',
-  }
-};
+const BASE_URL =
+  (typeof process !== 'undefined' && (
+    process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_BASE_URL
+  )) || 'http://localhost:5000';
 
-// Helper function to build full API URL
-export const buildApiUrl = (endpoint) => {
-  return `${API_CONFIG.BASE_URL}${endpoint}`;
-};
+const DEFAULT_TIMEOUT_MS = 30000;
 
-// Helper function to make API calls
-export const apiCall = async (endpoint, data, options = {}) => {
-  const url = buildApiUrl(endpoint);
-  
-  const config = {
-    method: 'POST',
-    headers: {
-      ...API_CONFIG.DEFAULT_HEADERS,
-      ...options.headers
-    },
-    body: JSON.stringify(data),
-    ...options
-  };
-
+async function requestJson(url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, {
-      ...config,
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    const isJson = (response.headers.get('content-type') || '').includes('application/json');
+    const data = isJson ? await response.json().catch(() => ({})) : {};
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const message = data?.error || `HTTP ${response.status}`;
+      return { success: false, error: message };
     }
 
-    return await response.json();
-  } catch (error) {
+    return { success: true, ...data };
+  } catch (err) {
+    const message = err.name === 'AbortError' ? 'Request timed out' : err.message || 'Network error';
+    return { success: false, error: message };
+  } finally {
     clearTimeout(timeoutId);
-    throw error;
   }
-};
+}
+
+export async function checkHealth() {
+  return requestJson(`${BASE_URL}/health`, { method: 'GET' });
+}
+
+export async function sendText(text) {
+  if (!text) return { success: false, error: 'Text is required' };
+  const form = new FormData();
+  form.append('text', text);
+  return requestJson(`${BASE_URL}/api/chat`, { method: 'POST', body: form });
+}
+
+export async function sendImage(file) {
+  if (!(file instanceof Blob)) return { success: false, error: 'Invalid image file' };
+  const form = new FormData();
+  form.append('file', file);
+  return requestJson(`${BASE_URL}/chat`, { method: 'POST', body: form });
+}
+
+export async function sendAudio(file) {
+  if (!(file instanceof Blob)) return { success: false, error: 'Invalid audio file' };
+  const form = new FormData();
+  form.append('file', file);
+  return requestJson(`${BASE_URL}/chat`, { method: 'POST', body: form });
+}
+
+export default { checkHealth, sendText, sendImage, sendAudio };

@@ -88,7 +88,7 @@ const Chat = () => {
         name: credentials.email.split('@')[0],
         email: credentials.email
       };
-      
+      navigate('/');
       setUser(mockUser);
       setIsAuthenticated(true);
       localStorage.setItem('multimodal-chatbot-user', JSON.stringify(mockUser));
@@ -120,7 +120,7 @@ const Chat = () => {
   const handleLogout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('multimodal-chatbot-user');
+    localStorage.clear()
     navigate('/');
   };
 

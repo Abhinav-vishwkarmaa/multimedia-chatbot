@@ -164,7 +164,7 @@ const Navbar = ({
         <div className="sidebar-header">
           <div className="logo">
             <Sparkles size={24} />
-            <span>ChatGPT</span>
+            <span>Multimodal-chatbot</span>
           </div>
           <button 
             className="new-chat-button"

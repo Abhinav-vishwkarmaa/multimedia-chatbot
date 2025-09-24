@@ -5,22 +5,25 @@ import './InputArea.css';
 
 const InputArea = ({ onSendMessage }) => {
   const [text, setText] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImagePreview, setSelectedImagePreview] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleTextSubmit = (e) => {
     e.preventDefault();
-    if (text.trim() || selectedImage || audioBlob) {
+    if (text.trim() || selectedImagePreview || audioBlob) {
       const messageData = {
         content: text.trim(),
-        imageUrl: selectedImage,
-        audioUrl: audioBlob ? URL.createObjectURL(audioBlob) : null
+        imageFile: selectedImageFile || null,
+        imagePreviewUrl: selectedImagePreview || null,
+        audioBlob: audioBlob || null
       };
       onSendMessage(messageData);
       setText('');
-      setSelectedImage(null);
+      setSelectedImagePreview(null);
+      setSelectedImageFile(null);
       setAudioBlob(null);
     }
   };
@@ -30,14 +33,16 @@ const InputArea = ({ onSendMessage }) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setSelectedImage(e.target.result);
+        setSelectedImagePreview(e.target.result);
+        setSelectedImageFile(file);
       };
       reader.readAsDataURL(file);
     }
   };
 
   const removeImage = () => {
-    setSelectedImage(null);
+    setSelectedImagePreview(null);
+    setSelectedImageFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -56,9 +61,9 @@ const InputArea = ({ onSendMessage }) => {
     <div className="input-area">
       <form onSubmit={handleTextSubmit} className="input-form">
         <div className="input-container">
-          {selectedImage && (
+          {selectedImagePreview && (
             <div className="preview-image">
-              <img src={selectedImage} alt="Preview" />
+              <img src={selectedImagePreview} alt="Preview" />
               <button
                 type="button"
                 className="remove-button"
@@ -132,7 +137,7 @@ const InputArea = ({ onSendMessage }) => {
               <button
                 type="submit"
                 className="send-button"
-                disabled={!text.trim() && !selectedImage && !audioBlob}
+                disabled={!text.trim() && !selectedImagePreview && !audioBlob}
                 title="Send message"
               >
                 <Send size={20} />
