@@ -4,8 +4,12 @@ import multer from 'multer';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
 import cors from 'cors';
+import dotenv from 'dotenv';
 
-const OPENAI_API_KEY = "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";
+dotenv.config();
+
+// const OPENAI_API_KEY = "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";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const PORT = 5000;
 const upload = multer({ storage: multer.memoryStorage() });
