@@ -2,14 +2,13 @@
 import express from 'express';
 import multer from 'multer';
 import fetch from 'node-fetch';
-import FormData from 'form-data';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// const OPENAI_API_KEY = "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";
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// Google Gemini API key
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || "AIzaSyAv7FWhshpknycydih7-opYppqaE-yVWXg";
 
 const PORT = 5000;
 const upload = multer({ storage: multer.memoryStorage() });
@@ -18,49 +17,31 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ---------------- OpenAI Helpers ---------------- */
-const askOpenAI = async (text) => {
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: text }],
-      temperature: 0.7,
-    }),
-  });
+/* ---------------- Google Gemini Helpers ---------------- */
+const askGoogle = async (text) => {
+  const model = 'gemini-2.5-flash';  // use a valid Gemini model
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text }] }],
+        // optionally, you can include generationConfig etc.
+      }),
+    }
+  );
 
   if (!resp.ok) {
     const errText = await resp.text();
-    throw new Error(`OpenAI Chat error: ${errText}`);
+    throw new Error(`Google Gemini error: ${errText}`);
   }
 
   const data = await resp.json();
-  return data.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text
+    || 'Sorry, I could not generate a response.';
 };
 
-const transcribeAudio = async (buffer, filename = 'audio.wav') => {
-  const form = new FormData();
-  form.append('file', buffer, { filename });
-  form.append('model', 'whisper-1');
-
-  const resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-    body: form,
-  });
-
-  if (!resp.ok) {
-    const errText = await resp.text();
-    throw new Error(`Whisper error: ${errText}`);
-  }
-
-  const data = await resp.json();
-  return data.text || '';
-};
 
 /* ---------------- Main Endpoint ---------------- */
 app.post('/api/chat', upload.single('file'), async (req, res) => {
@@ -71,23 +52,24 @@ app.post('/api/chat', upload.single('file'), async (req, res) => {
       const mime = req.file.mimetype;
 
       if (mime.startsWith('audio/')) {
-        // Transcribe audio using Whisper
-        inputText = await transcribeAudio(req.file.buffer, req.file.originalname);
-      } else if (mime.startsWith('image/')) {
-        // IMPORTANT: OpenAI Chat API does not process images directly.
-        // You can send a description prompt instead.
         return res.status(400).json({
           success: false,
-          error: 'Image input not supported directly. Use text describing the image.'
+          error: 'Audio transcription is not yet supported with Gemini API in this code.'
+        });
+      } else if (mime.startsWith('image/')) {
+        return res.status(400).json({
+          success: false,
+          error: 'Image input not supported directly here. Send a text description instead.'
         });
       } else {
         return res.status(400).json({ success: false, error: 'Unsupported file type' });
       }
     }
 
-    if (!inputText) return res.status(400).json({ success: false, error: 'No text found' });
+    if (!inputText)
+      return res.status(400).json({ success: false, error: 'No text found' });
 
-    const response = await askOpenAI(inputText);
+    const response = await askGoogle(inputText);
     res.json({ success: true, input: inputText, response });
   } catch (err) {
     console.error(err);
@@ -97,8 +79,10 @@ app.post('/api/chat', upload.single('file'), async (req, res) => {
 
 /* ---------------- Healthcheck ---------------- */
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', provider: 'openai-only' });
+  res.json({ status: 'ok', provider: 'google-gemini' });
 });
 
 /* ---------------- Start Server ---------------- */
-app.listen(PORT, () => console.log(`🚀 Multimodal chatbot running on http://localhost:${PORT}`));
+app.listen(PORT, () =>
+  console.log(`🚀 Gemini chatbot running on http://localhost:${PORT}`)
+);

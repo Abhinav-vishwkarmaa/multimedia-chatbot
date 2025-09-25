@@ -5,7 +5,7 @@ import './Welcome.css';
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [user, setUser] = useState(null);
 
   // Check if user is already authenticated
@@ -17,13 +17,7 @@ const Welcome = () => {
     }
   }, []);
 
-  // Load darkMode from localStorage on mount
-  useEffect(() => {
-    const storedMode = localStorage.getItem("darkMode");
-    if (storedMode) {
-      setDarkMode(JSON.parse(storedMode));
-    }
-  }, []);
+
 
   const handleNewChat = () => {
     // Create a new chat automatically
@@ -34,7 +28,7 @@ const Welcome = () => {
         {
           id: 1,
           type: 'bot',
-          content: 'Hello! I can help you with text, images, and audio. How can I assist you today?',
+          content: 'Hello! I can help you with text. How can I assist you today?',
           timestamp: new Date(),
           audioUrl: null
         }
@@ -67,9 +61,9 @@ const Welcome = () => {
           </p>
         </div>
 
-        <div className="features-grid">
+        <div className="features-grid" onClick={() => navigate('/chat')}>
           <div className="feature-card">
-            <div className="feature-icon">
+            <div className="feature-icon" onClick={() => navigate('/chat')}>
               <MessageSquare size={24} />
             </div>
             <h3>💬 Text Chat</h3>
@@ -94,14 +88,14 @@ const Welcome = () => {
         </div>
 
         <div className="action-section">
-          <button 
+          {/* <button 
             className="new-chat-button"
             onClick={handleNewChat}
           >
             <MessageSquare size={20} />
             <span>Start New Chat</span>
             <ArrowRight size={20} />
-          </button>
+          </button> */}
           
           {/* {!isAuthenticated ? (
             <div className="quick-actions">

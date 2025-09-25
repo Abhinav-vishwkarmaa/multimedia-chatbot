@@ -1,6 +1,8 @@
 import React from 'react';
-import Message from './Message.js';
-import LoadingIndicator from './LoadingIndicator.js';
+// import Message from './chat_text/Message.js';
+// import LoadingIndicator from './/LoadingIndicator.js';
+import Message from '../../components/chat_text/Message.js';
+import LoadingIndicator from '../../components/chat_text/LoadingIndicator.js';
 import './MessageList.css';
 
 const MessageList = ({ messages, isLoading }) => {

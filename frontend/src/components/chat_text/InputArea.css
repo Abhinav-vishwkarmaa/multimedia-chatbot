@@ -1,7 +1,7 @@
 /* ChatGPT-style Input Area */
 
 .input-area {
-  padding: 20px 0 40px;
+  padding: 10px 0 20px;
   background: var(--bg-primary);
   border-top: 1px solid var(--border-color);
   position: sticky;

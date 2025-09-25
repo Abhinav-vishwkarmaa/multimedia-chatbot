@@ -107,7 +107,7 @@ const InputArea = ({ onSendMessage }) => {
                 style={{ display: 'none' }}
               />
               
-              <button
+              {/* <button
                 type="button"
                 className="input-button"
                 onClick={() => fileInputRef.current?.click()}
@@ -132,7 +132,7 @@ const InputArea = ({ onSendMessage }) => {
                   onRecordingComplete={handleAudioRecorded}
                   onCancel={() => setIsRecording(false)}
                 />
-              )}
+              )} */}
 
               <button
                 type="submit"

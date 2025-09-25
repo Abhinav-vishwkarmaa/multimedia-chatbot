@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import MessageList from './MessageList.js';
-import InputArea from './InputArea.js';
-import api from '../api.js';
+import MessageList from '../../components/chat_text/MessageList.js';
+import InputArea from '../../components/chat_text/InputArea.js';
+import api from '../../api.js';
 import './ChatInterface.css';
 
 const ChatInterface = ({ currentChat, onChatUpdate }) => {
@@ -22,7 +22,7 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
         {
           id: 1,
           type: 'bot',
-          content: 'Hello! I can help you with text, images, and audio. Start a new conversation to begin!',
+          content: 'Hello! I can help you with text. Start a new conversation to begin!',
           timestamp: new Date(),
           audioUrl: null,
           imageUrl: null
@@ -196,7 +196,7 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
                   {
                     id: 1,
                     type: 'bot',
-                    content: 'Hello! I can help you with text, images, and audio. How can I assist you today?',
+                    content: 'Hello! I can help you with text. How can I assist you today?',
                     timestamp: new Date(),
                     audioUrl: null,
                     imageUrl: null
@@ -216,6 +216,7 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
   }
 
   return (
+    
     <div className="chat-interface">
       <MessageList messages={messages} isLoading={isLoading} />
       <div ref={messagesEndRef} />
