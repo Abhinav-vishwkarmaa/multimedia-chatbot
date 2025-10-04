@@ -70,20 +70,31 @@ const Register = () => {
     }
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock successful registration
-      const user = {
-        id: Date.now(),
-        name: formData.name.trim(),
-        email: formData.email
-      };
-      
-      localStorage.setItem('multimodal-chatbot-user', JSON.stringify(user));
-      navigate('/chat');
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store token and user
+        localStorage.setItem('multimodal-chatbot-token', data.token);
+        localStorage.setItem('multimodal-chatbot-user', JSON.stringify(data.user));
+        navigate('/chat');
+      } else {
+        setErrors({ general: data.message || 'Registration failed. Please try again.' });
+      }
     } catch (error) {
-      setErrors({ general: 'Registration failed. Please try again.' });
+      console.error('Registration error:', error);
+      setErrors({ general: 'Network error. Please try again.' });
     } finally {
       setIsLoading(false);
     }

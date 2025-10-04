@@ -5,7 +5,7 @@ import './Welcome.css';
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
 
   // Check if user is already authenticated
@@ -19,32 +19,39 @@ const Welcome = () => {
 
 
 
-  const handleNewChat = () => {
-    // Create a new chat automatically
-    const newChat = {
-      id: Date.now(),
-      name: `Chat ${new Date().toLocaleDateString()}`,
-      messages: [
-        {
-          id: 1,
-          type: 'bot',
-          content: 'Hello! I can help you with text. How can I assist you today?',
-          timestamp: new Date(),
-          audioUrl: null
-        }
-      ],
-      createdAt: new Date().toDateString(),
-      lastModified: new Date().toISOString()
-    };
+  const handleNewChat = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
 
-    // Save the new chat to localStorage
-    const existingChats = JSON.parse(localStorage.getItem('multimodal-chatbot-chats') || '[]');
-    const updatedChats = [newChat, ...existingChats];
-    localStorage.setItem('multimodal-chatbot-chats', JSON.stringify(updatedChats));
+    try {
+      const token = localStorage.getItem('multimodal-chatbot-token');
+      const response = await fetch('http://localhost:5000/api/chats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: `Chat ${new Date().toLocaleDateString()}`,
+          messages: [{
+            id: 1,
+            type: 'bot',
+            content: 'Hello! I can help you with text. How can I assist you today?',
+            timestamp: new Date(),
+            audioUrl: null
+          }]
+        })
+      });
 
-    // Set the new chat as current and navigate to chat page
-    localStorage.setItem('multimodal-chatbot-current-chat', JSON.stringify(newChat));
-    navigate('/chat');
+      if (response.ok) {
+        const newChat = await response.json();
+        navigate('/chat');
+      }
+    } catch (error) {
+      console.error('Create chat error:', error);
+    }
   };
 
   return (
@@ -61,14 +68,14 @@ const Welcome = () => {
           </p>
         </div>
 
-        <div className="features-grid" onClick={() => navigate('/chat')}>
-          <div className="feature-card">
-            <div className="feature-icon" onClick={() => navigate('/chat')}>
-              <MessageSquare size={24} />
-            </div>
-            <h3>💬 Text Chat</h3>
-            <p>Send text messages and get intelligent responses</p>
-          </div>
+        <div className="features-grid" >
+           <div className="feature-card" onClick={() => isAuthenticated ? navigate('/chat') : navigate('/login')}>
+             <div className="feature-icon">
+               <MessageSquare size={24} />
+             </div>
+             <h3>💬 Text Chat</h3>
+             <p>Send text messages and get intelligent responses</p>
+           </div>
           
           <div className="feature-card">
             <div className="feature-icon">
@@ -88,24 +95,24 @@ const Welcome = () => {
         </div>
 
         <div className="action-section">
-          {/* <button 
+          <button
             className="new-chat-button"
             onClick={handleNewChat}
           >
             <MessageSquare size={20} />
             <span>Start New Chat</span>
             <ArrowRight size={20} />
-          </button> */}
-          
-          {/* {!isAuthenticated ? (
+          </button>
+
+          {!isAuthenticated ? (
             <div className="quick-actions">
-              <button 
+              <button
                 className="quick-action-button"
                 onClick={() => navigate('/login')}
               >
                 Login
               </button>
-              <button 
+              <button
                 className="quick-action-button secondary"
                 onClick={() => navigate('/register')}
               >
@@ -117,14 +124,14 @@ const Welcome = () => {
               <p className="welcome-user">
                 Welcome back, <strong>{user?.name}</strong>!
               </p>
-              <button 
+              <button
                 className="quick-action-button secondary"
                 onClick={() => navigate('/chat')}
               >
                 Go to Chat
               </button>
             </div>
-          )} */}
+          )}
         </div>
 
         <div className="welcome-footer">

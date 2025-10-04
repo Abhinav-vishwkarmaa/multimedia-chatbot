@@ -51,20 +51,30 @@ const Login = () => {
     }
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock successful login
-      const user = {
-        id: 1,
-        name: formData.email.split('@')[0],
-        email: formData.email
-      };
-      
-      localStorage.setItem('multimodal-chatbot-user', JSON.stringify(user));
-      navigate('/chat');
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store token and user
+        localStorage.setItem('multimodal-chatbot-token', data.token);
+        localStorage.setItem('multimodal-chatbot-user', JSON.stringify(data.user));
+        navigate('/chat');
+      } else {
+        setErrors({ general: data.message || 'Login failed. Please try again.' });
+      }
     } catch (error) {
-      setErrors({ general: 'Login failed. Please try again.' });
+      console.error('Login error:', error);
+      setErrors({ general: 'Network error. Please try again.' });
     } finally {
       setIsLoading(false);
     }

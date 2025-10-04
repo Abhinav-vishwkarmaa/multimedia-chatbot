@@ -26,16 +26,17 @@ const Chat = () => {
   }, [darkMode]);
 
   // Load user from localStorage on app start
-  useEffect(() => {
-    const savedUser = localStorage.getItem('multimodal-chatbot-user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-      setIsAuthenticated(true);
-    } else {
-      // Redirect to welcome page if not authenticated
-      navigate('/chat');
-    }
-  }, [navigate]);
+   useEffect(() => {
+     const savedUser = localStorage.getItem('multimodal-chatbot-user');
+     const token = localStorage.getItem('multimodal-chatbot-token');
+     if (savedUser && token) {
+       setUser(JSON.parse(savedUser));
+       setIsAuthenticated(true);
+     } else {
+       // Redirect to welcome page if not authenticated
+       navigate('/');
+     }
+   }, [navigate]);
 
   // Load current chat from localStorage when component mounts
   useEffect(() => {
@@ -120,7 +121,8 @@ const Chat = () => {
   const handleLogout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.clear()
+    localStorage.removeItem('multimodal-chatbot-user');
+    localStorage.removeItem('multimodal-chatbot-token');
     navigate('/');
   };
 

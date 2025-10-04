@@ -32,47 +32,69 @@ const Navbar = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadChats();
-  }, []);
+    if (isAuthenticated) {
+      loadChats();
+    }
+  }, [isAuthenticated]);
 
-  const loadChats = () => {
-    const savedChats = localStorage.getItem('multimodal-chatbot-chats');
-    if (savedChats) {
-      const chats = JSON.parse(savedChats);
-      const chatsWithDates = chats.map(chat => ({
-        ...chat,
-        messages: chat.messages ? chat.messages.map(msg => ({
-          ...msg,
-          timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
-        })) : []
-      }));
-      setChats(chatsWithDates);
+  const loadChats = async () => {
+    try {
+      const token = localStorage.getItem('multimodal-chatbot-token');
+      const response = await fetch('http://localhost:5000/api/chats', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const chats = await response.json();
+        const chatsWithDates = chats.map(chat => ({
+          ...chat,
+          messages: chat.messages ? chat.messages.map(msg => ({
+            ...msg,
+            timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
+          })) : []
+        }));
+        setChats(chatsWithDates);
+      }
+    } catch (error) {
+      console.error('Load chats error:', error);
     }
   };
 
-  const saveChats = (chatsToSave) => {
-    localStorage.setItem('multimodal-chatbot-chats', JSON.stringify(chatsToSave));
+  const saveChats = async (chatsToSave) => {
+    // No need to save locally anymore, chats are saved via API
   };
 
-  const handleNewChat = () => {
-    const newChat = {
-      id: Date.now(),
-      name: `Chat ${new Date().toLocaleDateString()}`,
-      messages: [{
-        id: 1,
-        type: 'bot',
-        content: 'Hello! I can help you with text. How can I assist you today?',
-        timestamp: new Date(),
-        audioUrl: null
-      }],
-      createdAt: new Date().toISOString(),
-      lastModified: new Date().toISOString()
-    };
-    const updatedChats = [newChat, ...chats];
-    setChats(updatedChats);
-    saveChats(updatedChats);
-    onNewChat(newChat);
-    setIsOpen(false);
+  const handleNewChat = async () => {
+    try {
+      const token = localStorage.getItem('multimodal-chatbot-token');
+      const response = await fetch('http://localhost:5000/api/chats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: `Chat ${new Date().toLocaleDateString()}`,
+          messages: [{
+            id: 1,
+            type: 'bot',
+            content: 'Hello! I can help you with text. How can I assist you today?',
+            timestamp: new Date(),
+            audioUrl: null
+          }]
+        })
+      });
+      if (response.ok) {
+        const newChat = await response.json();
+        const updatedChats = [newChat, ...chats];
+        setChats(updatedChats);
+        onNewChat(newChat);
+        setIsOpen(false);
+      }
+    } catch (error) {
+      console.error('Create chat error:', error);
+    }
   };
 
   const handleChatSelect = (chat) => {
@@ -80,35 +102,62 @@ const Navbar = ({
     setIsOpen(false);
   };
 
-  const handleDeleteChat = (chatId, e) => {
+  const handleDeleteChat = async (chatId, e) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this chat?')) {
-      const updatedChats = chats.filter(chat => chat.id !== chatId);
-      setChats(updatedChats);
-      saveChats(updatedChats);
-      onDeleteChat(chatId);
+      try {
+        const token = localStorage.getItem('multimodal-chatbot-token');
+        const response = await fetch(`http://localhost:5000/api/chats/${chatId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const updatedChats = chats.filter(chat => chat._id !== chatId);
+          setChats(updatedChats);
+          onDeleteChat(chatId);
+        }
+      } catch (error) {
+        console.error('Delete chat error:', error);
+      }
     }
   };
 
   const handleRenameChat = (chatId, e) => {
     e.stopPropagation();
-    const chat = chats.find(c => c.id === chatId);
+    const chat = chats.find(c => c._id === chatId);
     if (chat) {
       setEditingChat(chatId);
       setNewChatName(chat.name);
     }
   };
 
-  const saveRename = () => {
+  const saveRename = async () => {
     if (newChatName.trim()) {
-      const updatedChats = chats.map(chat => 
-        chat.id === editingChat 
-          ? { ...chat, name: newChatName.trim(), lastModified: new Date().toISOString() }
-          : chat
-      );
-      setChats(updatedChats);
-      saveChats(updatedChats);
-      onRenameChat(editingChat, newChatName.trim());
+      try {
+        const token = localStorage.getItem('multimodal-chatbot-token');
+        const response = await fetch(`http://localhost:5000/api/chats/${editingChat}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name: newChatName.trim()
+          })
+        });
+        if (response.ok) {
+          const updatedChat = await response.json();
+          const updatedChats = chats.map(chat =>
+            chat._id === editingChat ? updatedChat : chat
+          );
+          setChats(updatedChats);
+          onRenameChat(editingChat, newChatName.trim());
+        }
+      } catch (error) {
+        console.error('Rename chat error:', error);
+      }
     }
     setEditingChat(null);
     setNewChatName('');
@@ -154,8 +203,8 @@ const Navbar = ({
                 </div>
               ) : (
                 chats.map(chat => (
-                  <div key={chat.id} className={`chat-item ${currentChat?.id === chat.id ? 'active' : ''}`} onClick={() => handleChatSelect(chat)}>
-                    {editingChat === chat.id ? (
+                  <div key={chat._id} className={`chat-item ${currentChat?._id === chat._id ? 'active' : ''}`} onClick={() => handleChatSelect(chat)}>
+                    {editingChat === chat._id ? (
                       <input
                         type="text"
                         value={newChatName}
