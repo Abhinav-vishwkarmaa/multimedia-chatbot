@@ -82,6 +82,106 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
     }
   };
 
+  // Format bot response with LaTeX and structured content
+  const formatBotResponse = (responseData) => {
+    // Handle different response formats
+    
+    // Case 1: Response is already a string (possibly with LaTeX)
+    if (typeof responseData === 'string') {
+      return responseData;
+    }
+    
+    if (typeof responseData.response === 'string') {
+      return responseData.response;
+    }
+    
+    // Case 2: Response has a 'text' field
+    if (responseData.text && typeof responseData.text === 'string') {
+      return responseData.text;
+    }
+    
+    // Case 3: Response is an array of structured content
+    if (!Array.isArray(responseData.response)) {
+      return 'Sorry, I could not process your request.';
+    }
+
+    // Build formatted content from response array
+    let formattedContent = '';
+    let prevType = null;
+    
+    responseData.response.forEach((item, index) => {
+      if (item.type === 'text') {
+        let text = item.content.trim();
+        if (!text) return;
+        
+        // Convert **text** to <strong>text</strong> for bold
+        text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        
+        // Check if text ends with punctuation that suggests a new line
+        const endsWithNewlineTrigger = text.match(/[:]\s*$/) || text.match(/^\d+\.\s+<strong>/);
+        
+        // Add spacing based on context
+        if (formattedContent) {
+          if (prevType === 'math' && !formattedContent.endsWith('\n\n')) {
+            // After display math, add a space
+            formattedContent += ' ';
+          } else if (!formattedContent.endsWith(' ') && !formattedContent.endsWith('\n')) {
+            formattedContent += ' ';
+          }
+        }
+        
+        formattedContent += text;
+        
+        // Add newline after text if it suggests a section break
+        if (endsWithNewlineTrigger && index < responseData.response.length - 1) {
+          formattedContent += '\n\n';
+        }
+        
+        prevType = 'text';
+      } else if (item.type === 'math') {
+        const mathContent = item.content.trim();
+        if (!mathContent) return;
+        
+        // Determine if inline or display math
+        // Inline: single variables, short expressions without line breaks
+        // Display: equations, multi-line expressions, or expressions with equals signs
+        const hasEquals = mathContent.includes('=');
+        const hasLineBreak = mathContent.includes('\\\\');
+        const isLong = mathContent.length > 40;
+        const isDisplayMath = hasEquals || hasLineBreak || isLong;
+        
+        if (isDisplayMath) {
+          // Display math - add newlines for proper formatting
+          if (formattedContent && !formattedContent.endsWith('\n\n')) {
+            formattedContent += '\n\n';
+          }
+          formattedContent += `$$${mathContent}$$`;
+          
+          // Check if next item is also display math
+          const nextItem = responseData.response[index + 1];
+          if (nextItem?.type === 'math') {
+            const nextHasEquals = nextItem.content.includes('=');
+            if (nextHasEquals) {
+              formattedContent += '\n\n';
+            }
+          } else {
+            formattedContent += '\n\n';
+          }
+        } else {
+          // Inline math
+          if (formattedContent && !formattedContent.endsWith(' ')) {
+            formattedContent += ' ';
+          }
+          formattedContent += `$${mathContent}$`;
+        }
+        
+        prevType = 'math';
+      }
+    });
+
+    return formattedContent.trim();
+  };
+
   const handleSendMessage = async messageData => {
     const newMessage = {
       id: Date.now(),
@@ -116,13 +216,17 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
         botResponseData = await api.sendText(messageData.content);
       }
 
+      // Format the bot response with LaTeX support
+      const formattedContent = formatBotResponse(botResponseData);
+
       const botResponse = {
         id: Date.now() + 1,
         type: 'bot',
-        content: botResponseData.response || botResponseData.text || 'Sorry, I could not process your request.',
+        content: formattedContent,
         timestamp: new Date(),
         audioUrl: botResponseData.audioUrl || null,
-        imageUrl: botResponseData.imageUrl || null
+        imageUrl: botResponseData.imageUrl || null,
+        hasLatex: formattedContent.includes('$') || formattedContent.includes('<strong>') // Flag for LaTeX/HTML rendering
       };
 
       const finalMessages = [...updatedMessages, botResponse];
@@ -198,7 +302,6 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
   }
 
   return (
-    
     <div className="chat-interface">
       <MessageList messages={messages} isLoading={isLoading} />
       <div ref={messagesEndRef} />

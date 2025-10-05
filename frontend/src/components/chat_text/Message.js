@@ -1,5 +1,7 @@
 import React from 'react';
 import { Play, Pause, Volume2, Image as ImageIcon, VolumeX, Copy, Check } from 'lucide-react';
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 import './Message.css';
 
 const Message = ({ message }) => {
@@ -40,9 +42,114 @@ const Message = ({ message }) => {
   }, [speechSynthesis, isSpeaking]);
 
   const formatTime = (timestamp) => {
-    // Handle both Date objects and date strings
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Parse content with LaTeX and HTML
+  const parseContent = (content) => {
+    if (!content) return null;
+
+    // Split by display math ($$...$$) first
+    const displayMathRegex = /\$\$(.*?)\$\$/gs;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = displayMathRegex.exec(content)) !== null) {
+      // Add text before the display math
+      if (match.index > lastIndex) {
+        const textBefore = content.substring(lastIndex, match.index);
+        parts.push({ type: 'text', content: textBefore });
+      }
+      
+      // Add display math
+      parts.push({ type: 'displayMath', content: match[1] });
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push({ type: 'text', content: content.substring(lastIndex) });
+    }
+
+    // Now process text parts for inline math and HTML
+    const finalParts = [];
+    parts.forEach((part) => {
+      if (part.type === 'displayMath') {
+        finalParts.push(part);
+      } else {
+        // Process inline math ($...$) in text
+        const inlineMathRegex = /\$(.+?)\$/g;
+        const textParts = [];
+        let textLastIndex = 0;
+        let textMatch;
+
+        while ((textMatch = inlineMathRegex.exec(part.content)) !== null) {
+          // Add text before inline math
+          if (textMatch.index > textLastIndex) {
+            textParts.push({
+              type: 'html',
+              content: part.content.substring(textLastIndex, textMatch.index)
+            });
+          }
+          
+          // Add inline math
+          textParts.push({ type: 'inlineMath', content: textMatch[1] });
+          textLastIndex = textMatch.index + textMatch[0].length;
+        }
+
+        // Add remaining text
+        if (textLastIndex < part.content.length) {
+          textParts.push({
+            type: 'html',
+            content: part.content.substring(textLastIndex)
+          });
+        }
+
+        finalParts.push(...textParts);
+      }
+    });
+
+    // Render the parts
+    return finalParts.map((part, index) => {
+      if (part.type === 'displayMath') {
+        return (
+          <div key={index} className="display-math-container">
+            <BlockMath math={part.content} />
+          </div>
+        );
+      } else if (part.type === 'inlineMath') {
+        return <InlineMath key={index} math={part.content} />;
+      } else if (part.type === 'html') {
+        // Convert newlines to <br/> and render HTML
+        const htmlContent = part.content
+          .split('\n')
+          .map((line, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <br />}
+              <span dangerouslySetInnerHTML={{ __html: line }} />
+            </React.Fragment>
+          ));
+        return <React.Fragment key={index}>{htmlContent}</React.Fragment>;
+      }
+      return null;
+    });
+  };
+
+  // Get plain text content for TTS (strip LaTeX and HTML)
+  const getPlainTextContent = (content) => {
+    if (!content) return '';
+    
+    // Remove LaTeX delimiters and math content
+    let plainText = content
+      .replace(/\$\$.*?\$\$/gs, ' [equation] ')
+      .replace(/\$(.+?)\$/g, ' $1 ')
+      .replace(/<strong>(.*?)<\/strong>/g, '$1')
+      .replace(/<[^>]*>/g, '')
+      .trim();
+    
+    return plainText;
   };
 
   // Text-to-Speech functionality
@@ -50,15 +157,14 @@ const Message = ({ message }) => {
     if (!message.content) return;
 
     if (isSpeaking) {
-      // Stop speaking
       if (speechSynthesis) {
         speechSynthesis.cancel();
         setIsSpeaking(false);
       }
     } else {
-      // Start speaking
       if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(message.content);
+        const plainText = getPlainTextContent(message.content);
+        const utterance = new SpeechSynthesisUtterance(plainText);
         utterance.rate = 0.9;
         utterance.pitch = 1;
         utterance.volume = 1;
@@ -82,9 +188,8 @@ const Message = ({ message }) => {
     try {
       await navigator.clipboard.writeText(message.content);
       setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+      setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
-      // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = message.content;
       document.body.appendChild(textArea);
@@ -111,7 +216,11 @@ const Message = ({ message }) => {
         
         {message.content && (
           <div className="message-text">
-            <div className="text-content">{message.content}</div>
+            <div className="text-content">
+              {message.hasLatex || message.content.includes('$') || message.content.includes('<strong>')
+                ? parseContent(message.content)
+                : message.content}
+            </div>
             <div className="message-actions">
               <button
                 className={`action-button tts-button ${isSpeaking ? 'speaking' : ''}`}
