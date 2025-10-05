@@ -138,6 +138,10 @@
 
 .action-section {
   margin-bottom: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 
 .new-chat-button {
@@ -156,6 +160,8 @@
   box-shadow: 0 4px 20px rgba(16, 163, 127, 0.3);
   position: relative;
   overflow: hidden;
+  /* width: 100px; */
+  justify-content: center;
 }
 
 .new-chat-button::before {
@@ -171,11 +177,16 @@
 
 .new-chat-button:hover::before {
   left: 100%;
+  
 }
 
 .new-chat-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(16, 163, 127, 0.4);
+  animation-duration: 2s;
+  width: 240px;
+  /* rotate: 5deg; */
+
 }
 
 .new-chat-button:active {
@@ -204,6 +215,9 @@
 .quick-action-button:hover {
   background: var(--bg-secondary);
   border-color: var(--border-hover);
+  rotate: -2deg;
+  animation-duration: 2s;
+  border-color: #10a37f;
 }
 
 .quick-action-button.secondary {
@@ -212,6 +226,10 @@
 
 .quick-action-button.secondary:hover {
   background: var(--bg-hover);
+    box-shadow: 0 4px 12px rgba(16, 163, 127, 0.1);
+    rotate: 2deg;
+    animation-duration: 1s;
+
 }
 
 .welcome-user {

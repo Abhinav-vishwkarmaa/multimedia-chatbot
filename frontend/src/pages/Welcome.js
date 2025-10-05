@@ -69,7 +69,7 @@ const Welcome = () => {
         </div>
 
         <div className="features-grid" >
-           <div className="feature-card" onClick={() => isAuthenticated ? navigate('/chat') : navigate('/login')}>
+           <div className="feature-card" >
              <div className="feature-icon">
                <MessageSquare size={24} />
              </div>
