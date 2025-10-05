@@ -15,6 +15,12 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  
+  // Add focus state for all fields
+  const [nameFocused, setNameFocused] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -107,6 +113,7 @@ const Register = () => {
           <button 
             className="back-button"
             onClick={() => navigate('/')}
+            aria-label="Go back"
           >
             <ArrowLeft size={20} />
           </button>
@@ -116,7 +123,7 @@ const Register = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           {errors.general && (
-            <div className="error-message general">
+            <div className="error-message general" role="alert">
               {errors.general}
             </div>
           )}
@@ -124,83 +131,127 @@ const Register = () => {
           <div className="form-group">
             <label htmlFor="name">Full Name</label>
             <div className="input-wrapper">
-              <User size={20} className="input-icon" />
+              {!nameFocused && !formData.name && (
+                <User size={20} className="input-icon" />
+              )}
               <input
                 type="text"
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                onFocus={() => setNameFocused(true)}
+                onBlur={() => setNameFocused(false)}
                 placeholder="Enter your full name"
                 className={errors.name ? 'error' : ''}
+                aria-invalid={errors.name ? 'true' : 'false'}
+                aria-describedby={errors.name ? 'name-error' : undefined}
               />
             </div>
-            {errors.name && <span className="error-text">{errors.name}</span>}
+            {errors.name && (
+              <span id="name-error" className="error-text" role="alert">
+                {errors.name}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <div className="input-wrapper">
-              <Mail size={20} className="input-icon" />
+              {!emailFocused && !formData.email && (
+                <Mail size={20} className="input-icon" />
+              )}
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
                 placeholder="Enter your email"
                 className={errors.email ? 'error' : ''}
+                aria-invalid={errors.email ? 'true' : 'false'}
+                aria-describedby={errors.email ? 'email-error' : undefined}
               />
             </div>
-            {errors.email && <span className="error-text">{errors.email}</span>}
+            {errors.email && (
+              <span id="email-error" className="error-text" role="alert">
+                {errors.email}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <div className="input-wrapper">
-              <Lock size={20} className="input-icon" />
+              {!passwordFocused && !formData.password && (
+                <Lock size={20} className="input-icon" />
+              )}
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
                 placeholder="Create a password"
                 className={errors.password ? 'error' : ''}
+                aria-invalid={errors.password ? 'true' : 'false'}
+                aria-describedby={errors.password ? 'password-error' : undefined}
               />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={0}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            {errors.password && <span className="error-text">{errors.password}</span>}
+            {errors.password && (
+              <span id="password-error" className="error-text" role="alert">
+                {errors.password}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
             <label htmlFor="confirmPassword">Confirm Password</label>
             <div className="input-wrapper">
-              <Lock size={20} className="input-icon" />
+              {!confirmPasswordFocused && !formData.confirmPassword && (
+                <Lock size={20} className="input-icon" />
+              )}
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                onFocus={() => setConfirmPasswordFocused(true)}
+                onBlur={() => setConfirmPasswordFocused(false)}
                 placeholder="Confirm your password"
                 className={errors.confirmPassword ? 'error' : ''}
+                aria-invalid={errors.confirmPassword ? 'true' : 'false'}
+                aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
               />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                tabIndex={0}
               >
                 {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
+            {errors.confirmPassword && (
+              <span id="confirmPassword-error" className="error-text" role="alert">
+                {errors.confirmPassword}
+              </span>
+            )}
           </div>
 
           <button
@@ -208,7 +259,14 @@ const Register = () => {
             className="submit-button"
             disabled={isLoading}
           >
-            {isLoading ? 'Creating Account...' : 'Create Account'}
+            {isLoading ? (
+              <>
+                <span className="button-loader"></span>
+                Creating Account...
+              </>
+            ) : (
+              'Create Account'
+            )}
           </button>
         </form>
 

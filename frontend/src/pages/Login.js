@@ -12,6 +12,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,7 +21,6 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -33,7 +34,6 @@ const Login = () => {
     setErrors({});
     setIsLoading(true);
 
-    // Basic validation
     const newErrors = {};
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -65,7 +65,6 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token and user
         localStorage.setItem('multimodal-chatbot-token', data.token);
         localStorage.setItem('multimodal-chatbot-user', JSON.stringify(data.user));
         navigate('/chat');
@@ -87,6 +86,7 @@ const Login = () => {
           <button 
             className="back-button"
             onClick={() => navigate('/')}
+            aria-label="Go back"
           >
             <ArrowLeft size={20} />
           </button>
@@ -96,7 +96,7 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           {errors.general && (
-            <div className="error-message general">
+            <div className="error-message general" role="alert">
               {errors.general}
             </div>
           )}
@@ -104,42 +104,64 @@ const Login = () => {
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <div className="input-wrapper">
-              <Mail size={20} className="input-icon" />
+              {!emailFocused && !formData.email && (
+                <Mail size={20} className="input-icon" />
+              )}
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
                 placeholder="Enter your email"
                 className={errors.email ? 'error' : ''}
+                aria-invalid={errors.email ? 'true' : 'false'}
+                aria-describedby={errors.email ? 'email-error' : undefined}
               />
             </div>
-            {errors.email && <span className="error-text">{errors.email}</span>}
+            {errors.email && (
+              <span id="email-error" className="error-text" role="alert">
+                {errors.email}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <div className="input-wrapper">
-              <Lock size={20} className="input-icon" />
+              {!passwordFocused && !formData.password && (
+                <Lock size={20} className="input-icon" />
+              )}
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
                 placeholder="Enter your password"
                 className={errors.password ? 'error' : ''}
+                aria-invalid={errors.password ? 'true' : 'false'}
+                aria-describedby={errors.password ? 'password-error' : undefined}
               />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={0}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            {errors.password && <span className="error-text">{errors.password}</span>}
+            {errors.password && (
+              <span id="password-error" className="error-text" role="alert">
+                {errors.password}
+              </span>
+            )}
           </div>
 
           <button
@@ -147,7 +169,14 @@ const Login = () => {
             className="submit-button"
             disabled={isLoading}
           >
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {isLoading ? (
+              <>
+                <span className="button-loader"></span>
+                Signing In...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
