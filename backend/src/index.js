@@ -178,7 +178,7 @@ app.get("/health", (req, res) => {
 });
 
 /* ---------------- Catch-all Handler: Send back React's index.html file ---------------- */
-app.get("*", (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/build/index.html"));
 });
 
