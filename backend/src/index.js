@@ -38,7 +38,7 @@ app.use("/api/chats", chatRoutes);
 /* ---------------- Serve Static Files ---------------- */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, "../frontend/build")));
+app.use(express.static(path.join(__dirname, "../../frontend/build")));
 
 /* ---------------- Gemini Response Formatter ---------------- */
 const formatGeminiResponse = (response) => {
@@ -179,7 +179,7 @@ app.get("/health", (req, res) => {
 
 /* ---------------- Catch-all Handler: Send back React's index.html file ---------------- */
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/build/index.html"));
+  res.sendFile(path.join(__dirname, "../../frontend/build/index.html"));
 });
 
 /* ---------------- Start Server ---------------- */
