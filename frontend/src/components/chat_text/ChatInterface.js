@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MessageList from '../../components/chat_text/MessageList.js';
 import InputArea from '../../components/chat_text/InputArea.js';
-import api from '../../api.js';
+import api, { BASE_URL } from '../../api.js';
 import './ChatInterface.css';
 
 const ChatInterface = ({ currentChat, onChatUpdate }) => {
@@ -43,7 +43,7 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
 
       if (chat._id) {
         // Update existing chat
-        const response = await fetch(`http://localhost:5000/api/chats/${chat._id}`, {
+        const response = await fetch(`${BASE_URL}/api/chats/${chat._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ const ChatInterface = ({ currentChat, onChatUpdate }) => {
         }
       } else {
         // Create new chat
-        const response = await fetch('http://localhost:5000/api/chats', {
+        const response = await fetch(`${BASE_URL}/api/chats`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

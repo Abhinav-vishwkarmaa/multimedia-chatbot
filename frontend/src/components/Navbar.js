@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   Menu, X, Plus, User, LogOut, LogIn, UserPlus, Shield,
   Trash2, Edit3, Moon, Sun, ChevronDown, Sparkles, MessageSquare
 } from 'lucide-react';
+import { BASE_URL } from '../api.js';
 import './Navbar.css';
 
 const Navbar = ({
@@ -40,7 +41,7 @@ const Navbar = ({
   const loadChats = async () => {
     try {
       const token = localStorage.getItem('multimodal-chatbot-token');
-      const response = await fetch('http://localhost:5000/api/chats', {
+      const response = await fetch(`${BASE_URL}/api/chats`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -68,7 +69,7 @@ const Navbar = ({
   const handleNewChat = async () => {
     try {
       const token = localStorage.getItem('multimodal-chatbot-token');
-      const response = await fetch('http://localhost:5000/api/chats', {
+      const response = await fetch(`${BASE_URL}/api/chats`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +108,7 @@ const Navbar = ({
     if (window.confirm('Are you sure you want to delete this chat?')) {
       try {
         const token = localStorage.getItem('multimodal-chatbot-token');
-        const response = await fetch(`http://localhost:5000/api/chats/${chatId}`, {
+        const response = await fetch(`${BASE_URL}/api/chats/${chatId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -137,7 +138,7 @@ const Navbar = ({
     if (newChatName.trim()) {
       try {
         const token = localStorage.getItem('multimodal-chatbot-token');
-        const response = await fetch(`http://localhost:5000/api/chats/${editingChat}`, {
+        const response = await fetch(`${BASE_URL}/api/chats/${editingChat}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: multimodal-chatbot
+    runtime: node
+    buildCommand: "cd frontend && npm install && npm run build && cd ../backend && npm install"
+    startCommand: "cd backend && npm start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+    # Add other env vars as secrets in Render dashboard
