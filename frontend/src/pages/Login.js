@@ -51,33 +51,47 @@ const Login = () => {
       return;
     }
 
-    try {
-      const response = await fetch(`${BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        }),
-      });
+try {
+  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email: formData.email,
+      password: formData.password
+    }),
+  });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('multimodal-chatbot-token', data.token);
-        localStorage.setItem('multimodal-chatbot-user', JSON.stringify(data.user));
-        navigate('/chat');
-      } else {
-        setErrors({ general: data.message || 'Login failed. Please try again.' });
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      setErrors({ general: 'Network error. Please try again.' });
-    } finally {
-      setIsLoading(false);
+  // Check if the response is actually JSON before parsing
+  const contentType = response.headers.get("content-type");
+  if (!response.ok) {
+    // Handle non-successful responses (like 400, 401, 500)
+    let errorMessage = 'Login failed. Please try again.';
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      // If the server sent a JSON error, use its message
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorMessage;
+    } else {
+      // If the server sent an HTML error page, use a generic message
+      errorMessage = `Server error: Received a non-JSON response (${response.status})`;
     }
+    throw new Error(errorMessage);
+  }
+
+  const data = await response.json();
+
+  localStorage.setItem('multimodal-chatbot-token', data.token);
+  localStorage.setItem('multimodal-chatbot-user', JSON.stringify(data.user));
+  navigate('/chat');
+
+} catch (error) {
+  console.error('Login error:', error);
+  // The error message from the 'throw' statement above will be caught here
+  setErrors({ general: error.message || 'Network error. Please try again.' });
+} finally {
+  setIsLoading(false);
+}
   };
 
   return (

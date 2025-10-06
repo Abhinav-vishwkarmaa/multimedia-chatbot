@@ -1,7 +1,4 @@
-const BASE_URL =
-  (typeof process !== 'undefined' && (
-process.env.REACT_APP_API_BASE_URL
-  ));
+const BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
