@@ -260,7 +260,7 @@ const Message = ({ message }) => {
       <div className="message-meta">
         <span className="timestamp">{formatTime(message.timestamp)}</span>
         <span className="message-type">
-          {message.type === 'user' ? 'You' : 'Bot'}
+          {message.type === 'user' ? 'You' : ' AITD BOT'}
         </span>
       </div>
     </div>
