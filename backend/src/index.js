@@ -6,8 +6,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 
 import authRoutes from "./routes/auth.js";
 import chatRoutes from "./routes/chat.js";
@@ -21,9 +19,7 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 /* ---------------- Constants ---------------- */
-const GOOGLE_API_KEY =
-  process.env.GOOGLE_API_KEY ||
-  "AIzaSyBFUEVTvwV-SwjG-xiMW3NAKLZYn8R2weY";
+const GOOGLE_API_KEY =  process.env.GEMINI_API_KEY;
 const PORT = process.env.PORT || 5000;
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -34,11 +30,6 @@ app.use(express.json());
 /* ---------------- Routes ---------------- */
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
-
-/* ---------------- Serve Static Files ---------------- */
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, "../../frontend/build")));
 
 /* ---------------- Gemini Response Formatter ---------------- */
 const formatGeminiResponse = (response) => {
@@ -175,11 +166,6 @@ app.post("/api/chat", upload.single("file"), async (req, res) => {
 /* ---------------- Healthcheck ---------------- */
 app.get("/health", (req, res) => {
   res.json({ status: "ok", provider: "google-gemini" });
-});
-
-/* ---------------- Catch-all Handler: Send back React's index.html file ---------------- */
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "../../frontend/build/index.html"));
 });
 
 /* ---------------- Start Server ---------------- */
