@@ -7,6 +7,4 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        fromSecret: PORT  # Render sets this automatically
     # Add other env vars as secrets in Render dashboard
