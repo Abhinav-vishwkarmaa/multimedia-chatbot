@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Image, Mic, ArrowRight, Sparkles } from 'lucide-react';
+import { BASE_URL } from '../api.js';
 import './Welcome.css';
 
 const Welcome = () => {
@@ -27,7 +28,7 @@ const Welcome = () => {
 
     try {
       const token = localStorage.getItem('multimodal-chatbot-token');
-      const response = await fetch('http://localhost:5000/api/chats', {
+      const response = await fetch(`${BASE_URL}/api/chats`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

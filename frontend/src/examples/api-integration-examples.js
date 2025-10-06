@@ -1,5 +1,7 @@
 // API Integration Examples for Different Backend Types
 
+import { BASE_URL } from '../api.js';
+
 // ========================================
 // EXAMPLE 1: OpenAI API Integration
 // ========================================
@@ -145,7 +147,7 @@ export const flaskBackendExample = async (messageData) => {
     formData.append('audio', blob, 'audio.wav');
   }
 
-  const apiResponse = await fetch('http://localhost:5000/api/chat', {
+  const apiResponse = await fetch(`${BASE_URL}/api/chat`, {
     method: 'POST',
     headers: {
       'Authorization': 'Bearer YOUR_TOKEN'

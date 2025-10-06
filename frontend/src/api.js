@@ -107,6 +107,8 @@ export async function sendAudio(file) {
   return requestJson(`${BASE_URL}/api/chat`, { method: 'POST', body: form });
 }
 
+export { BASE_URL };
+
 export default {
   checkHealth,
   registerUser,
